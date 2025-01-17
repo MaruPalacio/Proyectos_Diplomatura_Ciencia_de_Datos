@@ -1,4 +1,4 @@
-# Documentación Segundo Entregable - Team29 - Análisis Exploratorio y Curación de Datos 2024
+# Documentación Segundo Entregable - Análisis Exploratorio y Curación de Datos 2024
 
 ## Dataset Fuente
 El trabajo usa el dataset de [Melbourne Housing Market](https://www.kaggle.com/datasets/anthonypino/melbourne-housing-market) con fuente de Kaggle
