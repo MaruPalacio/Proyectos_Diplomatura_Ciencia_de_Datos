@@ -1,0 +1,1498 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "private_outputs": true,
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "accelerator": "GPU",
+    "gpuClass": "standard"
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/MaruPalacio/Proyectos_Diplomatura_Ciencia_de_Datos/blob/main/Computer_Vision/Project2\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "DSPCom-KmApV"
+      },
+      "source": [
+        "# Convolutional Neural Network (CNN)\n",
+        "\n",
+        "Tal como vimos en el notebook anterior, las ANN pueden ser útiles para algunos problemas de análisis de imágenes, pero presentan algunas limitaciones y problemas. Ahora vamos a discutir cómo las CNNs se puede utilizar para resolver la mayoría de estos problemas.\n",
+        "\n",
+        "**NOTA**: Este notebook ha sido creado a partir de recursos disponibles en la web que se listan a continuación. La fuente de las imágenes originales se puede consultar directamente el markdown insertado en la celda de texto.\n",
+        "- https://ujjwalkarn.me/2016/08/11/intuitive-explanation-convnets/\n",
+        "- https://towardsdatascience.com/introduction-to-convolutional-neural-network-cnn-de73f69c5b83\n",
+        "- https://towardsdatascience.com/applied-deep-learning-part-4-convolutional-neural-networks-584bc134c1e2\n",
+        "- https://machinelearningmastery.com/pooling-layers-for-convolutional-neural-networks/"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "8wzjrSjmSHPa"
+      },
+      "source": [
+        "## La arquitectura *LeNet* (años 90)\n",
+        "\n",
+        "*LeNet* fue una de las primeras redes neuronales convolucionales (también llamadas *ConvNet*) que ayudó a impulsar el campo del aprendizaje profundo. Cuando fue creada, LeNet se usaba principalmente para tareas de reconocimiento de caracteres, como leer códigos postales, dígitos, etc.\n",
+        "\n",
+        "A continuación, veremos una intuición de cómo la arquitectura LeNet aprende a reconocer imágenes. Vale la pena aclarar que se han propuesto varias arquitecturas nuevas en los últimos años que son mejoras sobre LeNet, pero todas utilizan los conceptos principales de LeNet y son relativamente más fáciles de entender si tiene una comprensión clara de la primera.\n",
+        "\n",
+        "![](https://ujwlkarn.files.wordpress.com/2016/08/screen-shot-2016-08-07-at-4-59-29-pm.png?w=1493)\n",
+        "\n",
+        "La ConvNet de la figura es similar en arquitectura a la LeNet original y clasifica una imagen de entrada en cuatro categorías: perro, gato, bote o pájaro. Como es evidente en la figura anterior, al recibir una imagen de barco como entrada, la red asigna correctamente la mayor probabilidad de barco (0.94) entre las cuatro categorías. La suma de todas las probabilidades en la capa de salida debe ser 1.\n",
+        "\n",
+        "Hay cuatro operaciones principales en la ConvNet de la figura anterior:\n",
+        "\n",
+        "* Convolución\n",
+        "* Función de activación / No linealidad (ReLU)\n",
+        "* Pooling o Submuestreo\n",
+        "* Clasificador (capas completamente conectada)\n",
+        "\n",
+        "Estas operaciones son los componentes básicos de cada ConvNet, por lo que comprender cómo funcionan es un paso importante para desarrollar una comprensión sólida de esta tecnología. Intentaremos comprender la intuición detrás de cada una de estas operaciones a continuación."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "CtFANreETj7N"
+      },
+      "source": [
+        "## Convolución\n",
+        "\n",
+        "Las ConvNets derivan su nombre del operador *convolución*. El propósito principal de una convolución es extraer características de la imagen de entrada. La convolución preserva la relación espacial entre píxeles al aprender las características de la imagen utilizando pequeñas regiones de datos de la imagen de entrada.\n",
+        "\n",
+        "![](https://miro.medium.com/max/4680/1*p-_47puSuVNmRJnOXYPQCg.png)\n",
+        "\n",
+        "En la terminología de CNN, la matriz 3×3 se llama *filtro*, *kernel* o *detector de características*, y el resultado de aplicar el filtro sobre toda la imagen se llama, *mapa de activación* o *feature map*.\n",
+        "\n",
+        "![](https://ujwlkarn.files.wordpress.com/2016/08/screen-shot-2016-08-05-at-11-03-00-pm.png)\n",
+        "\n",
+        "Como ya sabemos, diferentes valores para el filtro producirán diferentes feature maps para la misma imagen de entrada. En la siguiente imagen se puede observar este comportamiento.\n",
+        "\n",
+        "![](https://ujwlkarn.files.wordpress.com/2016/08/giphy.gif?w=480&zoom=2)\n",
+        "\n",
+        "En la práctica, **una CNN aprende los valores de estos filtros por sí sola** durante el proceso de entrenamiento (aunque aún necesitamos especificar parámetros como el número de filtros, el tamaño del filtro, la arquitectura de la red, etc. antes del proceso de entrenamiento). Cuantos más filtros tengamos, más características visuales se extraerán."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Sjx7r3-3YEu3"
+      },
+      "source": [
+        "El tamaño de la salida (es decir, el conjunto de los feature maps) se controla mediante tres parámetros que debemos decidir antes de realizar la convolución:\n",
+        "\n",
+        "* *Profundidad*: corresponde al número de filtros que usamos para la operación de convolución. Por ejemplo, en la figura realizamos una convolución usando 3 filtros distintos, produciendo así 3 feature maps diferentes. Se puede pensar en estos 3 feature maps como 3 matrices 2D apiladas.\n",
+        "\n",
+        "![](https://ujwlkarn.files.wordpress.com/2016/08/screen-shot-2016-08-10-at-3-42-35-am.png?w=802&h=402)\n",
+        "\n",
+        "* *Stride*: stride (o paso) es el número de píxeles en el que deslizamos el filtro sobre la imagen de entrada. Tener un paso más grande producirá feature maps más pequeños.\n",
+        "\n",
+        "![](https://miro.medium.com/max/840/1*L4T6IXRalWoseBncjRr4wQ@2x.gif)\n",
+        "\n",
+        "![](https://miro.medium.com/max/840/1*4wZt9G7W7CchZO-5rVxl5g@2x.gif)\n",
+        "\n",
+        "* *Padding*: a veces es conveniente rellenar la imagen de entrada con pixeles auxiliares alrededor del borde, para aplicar el filtro a los elementos en los bordes de la imagen. Agregar relleno se conoce como *convolución amplia* (wide convolution), y no usar relleno como *convolución estrecha* (narrow convolution).\n",
+        "\n",
+        "![](https://miro.medium.com/max/840/1*W2D564Gkad9lj3_6t9I2PA@2x.gif)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "5SxWnsxcZ1FA"
+      },
+      "source": [
+        "## Función de activación / No linealidad (ReLU)\n",
+        "\n",
+        "Después de cada operación de convolución, LeNet utiliza una operación adicional llamada *ReLU*. Como vimos en la revisión de los conceptos de ANN, ReLU significa *unidad lineal rectificada* y es una función de activación que realiza una operación no lineal, lo cual es una característica deseable en las ConvNets (aunque vamos a omitir los detalles). Su salida está dada por:\n",
+        "\n",
+        "![](https://ujwlkarn.files.wordpress.com/2016/08/screen-shot-2016-08-10-at-2-23-48-am.png?w=1071&h=336)\n",
+        "\n",
+        "La operación ReLU se puede entender claramente a partir de la siguiente imagen, donde la imagen de la izquierda ha sido umbralizada a cero, es decir, reemplaza los valores negativos (píxeles oscuros) del feature map de entrada con cero.\n",
+        "\n",
+        "![](https://ujwlkarn.files.wordpress.com/2016/08/screen-shot-2016-08-07-at-6-18-19-pm.png?w=1496)\n",
+        "\n",
+        "Un feature map de salida como éste se denomina feature map *rectificado*. Como ya sabemos, también se pueden usar otras funciones no lineales, como *tanh* o *sigmoide* en lugar de ReLU, pero se ha encontrado que ReLU funciona mejor en la mayoría de las situaciones.\n",
+        "Esta operación no modifica las dimensiones de los feature maps.\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "qu1juH4ubqt0"
+      },
+      "source": [
+        "## Pooling o Submuestreo\n",
+        "\n",
+        "Esta operación si modifica las dimensiones del feature map.\n",
+        "\n",
+        "La idea del *pooling espacial* (también llamado submuestreo) es reducir la dimensionalidad de cada feature map, reteniendo la información más importante. El pooling espacial puede ser de diferentes tipos: *Max*, *Mean*, *Sum*, etc. Un pooling típico consiste en tomar una ventana de 2×2 con desplazamiento de 2 píxeles.\n",
+        "\n",
+        "Para el caso de **Max** pooling se toma el valor máximo dentro de esa ventana como valor del nuevo **pooled featured map**.\n",
+        "\n",
+        "![](https://miro.medium.com/max/840/1*vOxthD0FpBR6fJcpPxq6Hg.gif)\n",
+        "\n",
+        "Para el caso de **Mean** polling se toma el promedio de los valores de la ventana como valor del nuevo pixel en el **pooled featured map**.\n",
+        "\n",
+        "![](https://miro.medium.com/max/569/1*5U2dM5N8uI4eEunolJHRhg.jpeg)\n",
+        "\n",
+        "Como se muestra en ambas figuras, esta operación reduce la dimensionalidad del feature map de entrada. Esta reducción depende tanto del tamaño de la ventana como del desplazamiento establecido.\n",
+        "\n",
+        "La figura de abajo muestra el efecto de dos tipos de pooling (Max y Sum) sobre una feature map rectificado:\n",
+        "\n",
+        "![](https://ujwlkarn.files.wordpress.com/2016/08/screen-shot-2016-08-07-at-6-11-53-pm.png)\n",
+        "\n",
+        "En particular, la operación de pooling tiene las siguintes ventajas:\n",
+        "\n",
+        "* reduce sistemáticamente las dimensiones del feature map de entrada, produciendo una salida más pequeñas y manejable;\n",
+        "* reduce el número de parámetros y cálculos en la red(controlando el overfitting);\n",
+        "* hace que la red sea invariable a pequeñas transformaciones, distorsiones y traslaciones en la imagen de entrada.\n",
+        "\n",
+        "En la red que se muestra a continuación, la operación de pooling se aplica por separado a cada feature map (tener en cuenta que obtenemos 3 features maps de salida a partir de los tres feature maps de entrada).\n",
+        "\n",
+        "![](https://ujwlkarn.files.wordpress.com/2016/08/screen-shot-2016-08-07-at-6-19-37-pm.png?w=802&h=438)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "lpZ3FbFve8YF"
+      },
+      "source": [
+        "Recopilemos todo lo visto hasta el momento. Ya vimos cómo funcionan las operaciones de convolución, activación y pooling. Es importante comprender que estas capas son los componentes básicos de cualquier CNN, ya que se encargan de extraer las features de las imágenes de entrada.\n",
+        "\n",
+        "Ahora volvamos a mirar la arquitectura original presentada al inicio del notebook.\n",
+        "\n",
+        "![](https://ujwlkarn.files.wordpress.com/2016/08/screen-shot-2016-08-08-at-2-26-09-am.png?w=1496)\n",
+        "\n",
+        "Como se muestra en la figura, tenemos un conjunto de capas (*1st convolución+ReLU*, *1st Pooling*, *2nd convolución+ReLU* y *2nd Pooling*) que en conjunto extraen las features representativas de las imágenes, introducen la no linealidad en la red y reducen la dimensión de las features, mientras intentan que las features sean invariantes en la escala y traslación.\n",
+        "\n",
+        "La salida de la segunda capa de pooling (*2nd Pooling* en la figura) actúa como una entrada a la capa totalmente conectada (*Fully Connected* en la figura), que se encarga especificamente de realizar la clasificación de las imágenes."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "0H0rVaUAf_Iy"
+      },
+      "source": [
+        "## Capa totalmente conectada (ANN)\n",
+        "\n",
+        "La capa totalmente conectada es un MPL tradicional, similar a la que discutimos en el notebook anterior,  aunque también se podríía usar otros clasificadores como ser SVM, Random Forest, Desicion Tree, etc.\n",
+        "\n",
+        "En este punto es importante remarcar que la salida de las capas convolucionales y pooling representan **features visuales de alto nivel** de la imagen de entrada. El propósito de la capa totalmente conectada es usar estas features para clasificar una nueva imagen de entrada en una de varias clases.\n",
+        "\n",
+        "![](https://ujwlkarn.files.wordpress.com/2016/08/screen-shot-2016-08-06-at-12-34-02-am.png?w=968&h=304)\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "9S4tZPhwhbXv"
+      },
+      "source": [
+        "## Poniendo todo junto: entrenamiento mediante Backpropagation\n",
+        "\n",
+        "Como se discutió anteriormente, las capas convolución + pooling actúan como extractores de features de la imagen de entrada, mientras que la capa completamente conectada actúa como un clasificador.\n",
+        "\n",
+        "![](https://ujwlkarn.files.wordpress.com/2016/08/screen-shot-2016-08-07-at-9-15-21-pm.png?w=1496)\n",
+        "\n",
+        "El entrenamiento de esta red se realiza mediante el algoritmo BackProp que vimos en el notebook anterior. Entrenar una ConvNet significa esencialmente que todos los pesos y parámetros de la red se han optimizado para clasificar correctamente las imágenes del conjunto de entrenamiento.\n",
+        "\n",
+        "Una vez entrenado el modelo, cuando se ingresa una nueva imagen en ConvNet la red propaga hacia adelante la información hasta la capa de salida, entregando una probabilidad para cada clase. Si nuestro conjunto de entrenamiento es lo suficientemente grande, la red (con suerte) **generalizará** bien a nuevas imágenes no observadas, y en su mayoría las clasificará en las categorías correctas.\n",
+        "\n",
+        "Ahora si, ya podemos comenzar con la práctica de este laboratorio."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Z_v7-967QN31"
+      },
+      "source": [
+        "# CNN para clasificación de imágenes\n",
+        "\n",
+        "Tutorial extraído de https://www.tensorflow.org/tutorials/images/cnn"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "qLGkt5qiyz4E"
+      },
+      "source": [
+        "Este tutorial muestra el entrenamiento de un *red neuronal convolucional* (CNN) para clasificar imágenes del dataset [CIFAR](https://www.cs.toronto.edu/~kriz/cifar.html). Dado que el tutorial utiliza [Keras Sequential API](https://www.tensorflow.org/guide/keras/overview), la creación y el entrenamiento del modelo consiste sólo en unas pocas líneas de código.\n",
+        "\n",
+        "[TensorFlow](https://www.tensorflow.org/) es una biblioteca de código abierto para machine learning desarrollado por Google para construir y entrenar redes neuronales profundas. El nombre TensorFlow deriva de las operaciones que tales redes neuronales realizan sobre **arrays multidimensionales de datos**. Estos arrays multidimensionales son referidos como \"tensores\".\n",
+        "\n",
+        "Además de este notebook, si te quedas con ganas más, te recomiendo chequear este tutorial https://www.tensorflow.org/tutorials/images/classification."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "m7KBpffWzlxH"
+      },
+      "source": [
+        "## Importar TensorFlow"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "iAve6DCL4JH4"
+      },
+      "source": [
+        "from __future__ import absolute_import, division, print_function, unicode_literals\n",
+        "\n",
+        "try:\n",
+        "  # %tensorflow_version only exists in Colab.\n",
+        "  %tensorflow_version 2.x\n",
+        "except Exception:\n",
+        "  pass\n",
+        "import tensorflow as tf\n",
+        "from tensorflow import keras\n",
+        "\n",
+        "from tensorflow.keras import datasets, layers, models\n",
+        "import matplotlib.pyplot as plt\n",
+        "\n",
+        "#print(tf.__version__)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "jRFxccghyMVo"
+      },
+      "source": [
+        "## Descargar y procesar el dataset CIFAR10\n",
+        "\n",
+        "El dataset CIFAR10 contiene 60.000 imágenes en color para 10 clases, con 6.000 imágenes en cada clase. El conjunto de datos se divide en 50.000 imágenes de entrenamiento y 10.000 imágenes de prueba. las clases son mutuamente excluyentes y no hay solapamiento entre ellas."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "JWoEqyMuXFF4"
+      },
+      "source": [
+        "(train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()\n",
+        "\n",
+        "# Normalize pixel values to be between 0 and 1\n",
+        "train_images, test_images = train_images / 255.0, test_images / 255.0"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "7wArwCTJJlUa"
+      },
+      "source": [
+        "## Verificar los datos\n",
+        "\n",
+        "Para verificar que el dataset es correcto, vamos a mostrar las primeras 25 imágenes del conjunto de entrenamiento y junto al nombre de su clase debajo de cada imagen.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "K3PAELE2eSU9"
+      },
+      "source": [
+        "class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',\n",
+        "               'dog', 'frog', 'horse', 'ship', 'truck']\n",
+        "\n",
+        "plt.figure(figsize=(10,10))\n",
+        "for i in range(25):\n",
+        "    plt.subplot(5,5,i+1)\n",
+        "    plt.xticks([])\n",
+        "    plt.yticks([])\n",
+        "    plt.grid(False)\n",
+        "    plt.imshow(train_images[i], cmap=plt.cm.binary)\n",
+        "    # The CIFAR labels happen to be arrays,\n",
+        "    # which is why you need the extra index\n",
+        "    plt.xlabel(class_names[train_labels[i][0]])\n",
+        "plt.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Oewp-wYg31t9"
+      },
+      "source": [
+        "## Crear la base de la CNN (extractor de features)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "3hQvqXpNyN3x"
+      },
+      "source": [
+        "Antes de empezar, se recomienda tener a mano la [documentación de referencia de la librería TensorFlow](https://www.tensorflow.org/api_docs/python/tf), ya que les será muy útil para indagar en la definión de las funciones utilizadas en esta parte del notebook\n",
+        "\n",
+        "Las 6 líneas de código presentadas a continuación definen la base de la red convolucional utilizando un patrón común: una pila de [Conv2D](https://www.tensorflow.org/api_docs/python/tf/keras/layers/Conv2D) y [MaxPooling2D](https://www.tensorflow.org/api_docs/python/tf/keras/layers/MaxPool2D) layers. Este conjunto de capas serán las encargadas de extraer las features de las imágenes una vez que se haya entrenado el modelo completo.\n",
+        "\n",
+        "Esta CNN toma como entrada tensores de la forma `input_shape=(32, 32, 3)`, donde cada argumento corresponde a `(alto, ancho, canales)`, es decir, el formato de las imágenes del dataset CIFAR. La forma de la capa de entrada se especifica en la primer capa de convolución `Conv2D`.\n",
+        "\n",
+        "Cada capa `Conv2D` requiere que se especifiquen una serie de argumentos. En este caso la primera `Conv2D` especifica 32 filtro de tamaño 3x3, mientras que la segunda y tercera `Conv2D` especifican 64 filtro de tamaño 3x3 cada una.\n",
+        "\n",
+        "Además, entre cada capa Conv2D tenemos una capa de `MaxPooling` de tamaño 2x2 cada una.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "L9YmGQBQPrdn"
+      },
+      "source": [
+        "model = models.Sequential()\n",
+        "# 1st convolution layer: 32 filters of 3x3, ReLU activation function\n",
+        "model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)))\n",
+        "# 1st max pooling layer: 2x2\n",
+        "model.add(layers.MaxPooling2D((2, 2)))\n",
+        "# 2nd convolution layer: 64 filters of 3x3, ReLU activation function\n",
+        "model.add(layers.Conv2D(64, (3, 3), activation='relu'))\n",
+        "# 2nd max pooling layer: 2x2\n",
+        "model.add(layers.MaxPooling2D((2, 2)))\n",
+        "# 3st convolution layer: 64 filters of 3x3, ReLU activation function\n",
+        "model.add(layers.Conv2D(64, (3, 3), activation='relu'))"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "lvDVFkg-2DPm"
+      },
+      "source": [
+        "Ahora podemos visualizar la arquitectura de nuestra CNN haciendo:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "8-C4XBg4UTJy"
+      },
+      "source": [
+        "model.summary()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "_j-AXYeZ2GO5"
+      },
+      "source": [
+        "Arriba se puede ver que la salida de cada capa `Conv2D` y `MaxPooling2D` es un tensor 3D con la forma (None, **alto, ancho, canales**). Por el momento el valor \"None\" va a ser ignorado. Las dimensiones de **ancho** y **alto** tienden a disminuir a medida que se avanza más profundamente en la red (ya que no se ha especificado el uso de *padding*). El número de **canales** se corresponde con la cantidad de filtros (o lo que es lo mismo, la cantidad de features maps de salida para cada `Conv2D`). Dado que el ancho y alto de la imagen de entrada se reduce sistemáticamente a medida que se avanza en la red, se puede pagar el costo computacional para añadir más canales de salida en cada capa `Conv2D`.\n",
+        "\n",
+        "Finalmente, la última columna de la tabla presenta la cantidad de parámetros de cada capa, es decir, la cantidad de pesos.\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "_v8sVOtG37bT"
+      },
+      "source": [
+        "## Añadir capas densas (Clasificador)\n",
+        "\n",
+        "Para completar nuestro modelo, se usa el último tensor de salida de la arquitectura base para alimentar una ANN que permita realizar la clasificación. Recuerden que las capas `Dense` toman vectores como entrada (que son arreglos 1D), mientras que la salida del tensor es 3D. En primer lugar, vamos a aplanar la salida 3D de la arquitectura base a 1D, y a continuación, añadimos dos capas densas. CIFAR tiene 10 clases de salida, por lo que la capa de salida contiene 10 nodos y una activación **softmax** (otro tipo de función de activación con la misma función de *sigmoid* o *ReLu* vistas antes)."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "mRs95d6LUVEi"
+      },
+      "source": [
+        "# Flatten layer\n",
+        "model.add(layers.Flatten())\n",
+        "# Dense layer\n",
+        "model.add(layers.Dense(64, activation='relu'))\n",
+        "# Output layer\n",
+        "model.add(layers.Dense(10, activation='softmax'))"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ipGiQMcR4Gtq"
+      },
+      "source": [
+        "Para ver la arquitectura completa de nuestro modelo luego de añadir las capas totalmente conectadas, hacemos:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "8Yu_m-TZUWGX"
+      },
+      "source": [
+        "model.summary()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "xNKXi-Gy3RO-"
+      },
+      "source": [
+        "Como se puede ver, la salida de la arquitectura base tiene la forma (4, 4, 64), que es aplanada a un vector de 1024 nodos antes de pasar por los dos capas densas de la ANN."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "P3odqfHP4M67"
+      },
+      "source": [
+        "## Compilar y entrenar el modelo"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "MdDzI75PUXrG"
+      },
+      "source": [
+        "model.compile(optimizer='adam',\n",
+        "              loss='sparse_categorical_crossentropy',\n",
+        "              metrics=['accuracy'])\n",
+        "\n",
+        "history = model.fit(train_images, train_labels, epochs=10,\n",
+        "                    validation_data=(test_images, test_labels))"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "jKgyC5K_4O0d"
+      },
+      "source": [
+        "## Evaluar el modelo"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "gtyDF0MKUcM7"
+      },
+      "source": [
+        "plt.plot(history.history['accuracy'], label='accuracy')\n",
+        "plt.plot(history.history['val_accuracy'], label = 'val_accuracy')\n",
+        "plt.xlabel('Epoch')\n",
+        "plt.ylabel('Accuracy')\n",
+        "plt.ylim([0.5, 1])\n",
+        "plt.legend(loc='lower right')\n",
+        "\n",
+        "test_loss, test_acc = model.evaluate(test_images,  test_labels, verbose=2)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "0LvwaKhtUdOo"
+      },
+      "source": [
+        "print(test_acc)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "8cfJ8AR03gT5"
+      },
+      "source": [
+        "Finalmente, vemos que nuestra CNN ha logrado un *accuracy* sobre el conjunto de pruebas cercano al 70%, lo cual no está nada mal para un par de líneas de código y unos minutos de ejecución."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "1EZDJdHHadcx"
+      },
+      "source": [
+        "## Visualizar filtros convolucionales aprendidos en la CNN\n",
+        "\n",
+        "Una vez realizado el proceso de entrenamiento, las CNNs usan los filtros aprendidos para producir features maps sobre la imagen de entrada o sobre otros features maps que representan la salida en capas anteriores. Estos filtros son arreglos bidimensionales que contienen los pesos estimados durante el entrenamiento.\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Sr6MH7--bwAv"
+      },
+      "source": [
+        "import math\n",
+        "import numpy as np\n",
+        "\n",
+        "# Iterate thru all the layers of the model\n",
+        "\n",
+        "layers = [model.layers[0]]  # 0: First layer; 2: Second layer; ...\n",
+        "#layers = model.layers       # All layer (WARNING: Take a lot of time!!)\n",
+        "for layer in layers:\n",
+        "    if 'conv' in layer.name:\n",
+        "        weights, bias= layer.get_weights()\n",
+        "        print(layer.name)\n",
+        "\n",
+        "        #normalize filter values between 0 and 1 for visualization\n",
+        "        f_min, f_max = weights.min(), weights.max()\n",
+        "        filters = (weights - f_min) / (f_max - f_min)\n",
+        "        print(filters.shape)\n",
+        "        filter_cnt=1\n",
+        "\n",
+        "        fig = plt.figure(figsize=(math.ceil(filters.shape[2]/2), math.ceil(filters.shape[3]/2)))\n",
+        "        #plotting all the filters\n",
+        "        for i in range(filters.shape[3]):\n",
+        "            #get the filters\n",
+        "            filt=filters[:,:,:,i]\n",
+        "            #plotting each of the channel, color image RGB channels\n",
+        "            for j in range(filters.shape[2]):\n",
+        "                ax = fig.add_subplot(filters.shape[3], filters.shape[2], filter_cnt)\n",
+        "                ax.set_xticks([])\n",
+        "                ax.set_yticks([])\n",
+        "                plt.imshow(filt[:,:,j])\n",
+        "                filter_cnt += 1\n",
+        "        plt.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "77Yr-tV8Z5F4"
+      },
+      "source": [
+        "## Visualizar features maps generados con la CNN\n",
+        "\n",
+        "Como ya vimos, los features maps se generan aplicando los filtros convolucionales a la imagen de entrada o a otros feratures maps que representan la salida en capas anteriores. La visualización de features maps proporciona información sobre las representaciones internas dada una entrada específica para cada una de las capas convolucionales del modelo.\n",
+        "\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "N16zyLqQb3MU"
+      },
+      "source": [
+        "np.seterr(divide='ignore', invalid='ignore')\n",
+        "\n",
+        "# Retrieve layer and its names\n",
+        "idx_layer = [4] # Change idx_layer values for specific layers\n",
+        "successive_outputs = [model.layers[i].output for i in idx_layer]\n",
+        "layer_names = [model.layers[i].name for i in idx_layer]\n",
+        "\n",
+        "# Define a new Model\n",
+        "# Input = image\n",
+        "# Outputs = intermediate representations for all layers in the previous model after the first.\n",
+        "visualization_model = tf.keras.models.Model(inputs = model.inputs, outputs = successive_outputs)\n",
+        "\n",
+        "# Shape images\n",
+        "height = test_images.shape[1]\n",
+        "width = test_images.shape[2]\n",
+        "channel = test_images.shape[3]\n",
+        "# For some images in dataset. Chage to select another images\n",
+        "for img_idx in (0,1000,2000,3000,4000):\n",
+        "  #Load the input image\n",
+        "  img = test_images[img_idx, :, :, :]\n",
+        "  img = img.reshape(1, height, width, channel)\n",
+        "\n",
+        "  # Let's run input image through our vislauization network\n",
+        "  # to obtain all intermediate representations for the image.\n",
+        "  successive_feature_maps = visualization_model.predict(img)\n",
+        "\n",
+        "  for idx_sfm in range(len(successive_feature_maps)):\n",
+        "    layer_name = layer_names[idx_sfm]\n",
+        "    feature_map = successive_feature_maps[idx_sfm]\n",
+        "\n",
+        "    # Only in case of selecting a single layer\n",
+        "    if len(feature_map.shape)==3:\n",
+        "      x = feature_map.shape[0]\n",
+        "      y = feature_map.shape[1]\n",
+        "      z = feature_map.shape[2]\n",
+        "      feature_map = feature_map.reshape(1, x, y, z)\n",
+        "\n",
+        "    if len(feature_map.shape) == 4:\n",
+        "      # Plot Feature maps for the conv / maxpool layers, not the fully-connected layers\n",
+        "      n_features = feature_map.shape[-1]  # number of features in the feature map\n",
+        "      size       = feature_map.shape[ 1]  # feature map shape (1, size, size, n_features)\n",
+        "\n",
+        "      # We will tile our images in this matrix\n",
+        "      display_grid = np.zeros((size, (size) * n_features))\n",
+        "\n",
+        "      # Postprocess the feature to be visually palatable\n",
+        "      for idx_nfeat in tf.range(n_features):\n",
+        "        x  = feature_map[0, :, :, idx_nfeat]\n",
+        "        x -= x.mean()\n",
+        "        x /= x.std ()\n",
+        "        x *=  64\n",
+        "        x += 128\n",
+        "        x  = np.clip(x, 0, 255).astype('uint8')\n",
+        "        # Tile each filter into a horizontal grid\n",
+        "        display_grid[:, idx_nfeat * size : (idx_nfeat + 1) * size] = x# Display the grid\n",
+        "\n",
+        "      scale = 20. / n_features\n",
+        "      plt.figure( figsize=(scale * n_features, scale) )\n",
+        "      plt.title ( class_names[train_labels[img_idx][0]] + \" :: \" + layer_name + \" :: \" + str(feature_map.shape) )\n",
+        "      plt.grid  ( False )\n",
+        "      plt.imshow( display_grid, aspect='auto', cmap='viridis' )"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "2ln55VWBfjgc"
+      },
+      "source": [
+        "---\n",
+        "\n",
+        "# Trabajo Práctico 1 (segunda parte)\n",
+        "\n",
+        "**Acá tienen que dejar los datos de las y los integrantes del grupo:**\n",
+        "\n",
+        "Nombre y Apellido: Mariel Palacio, correo eletrónico: mariel.palacio@mi.unc.edu.ar\n",
+        "\n",
+        "---"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "2j3DS0bPOXJd"
+      },
+      "source": [
+        "## **EJERCICIO 2.1**: entrenar la CNN para resolver un nuevo problema\n",
+        "\n",
+        "Reproduzca el workflow completo del tutorial presentado en este notebook para el data set utilizado en el notebook anterior con ANN: [Fashion MNIST](https://github.com/zalandoresearch/fashion-mnist). Esto implica:\n",
+        "\n",
+        "- Separar el nuevo dataset en un **conjunto de entrenamiento** y un **conjunto de testeo**\n",
+        "- Realizar el **entrenamiento de la CNN**\n",
+        "- Realizar **evaluación del modelo** y reportar los resultados\n",
+        "- Presentar una **comparación** entre los resultados obtenidos con ANN y CNN."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Cargamos el dataset de Fashion MNIST"
+      ],
+      "metadata": {
+        "id": "RNxeD6RmeOn9"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import math\n",
+        "import numpy as np"
+      ],
+      "metadata": {
+        "id": "EvAS8jygDkLl"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "7MqDQO0KCaWS"
+      },
+      "source": [
+        "fashion_mnist = keras.datasets.fashion_mnist\n",
+        "\n",
+        "(train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Recordando del 'Lab 1'\n",
+        " > Al cargar el dataset, la función retorna cuatro arreglos en `NumPy`:\n",
+        "\n",
+        "> * Los arreglos `train_images` y `train_labels` son los datos del *training set* que se usan para aprender el modelo.\n",
+        "* Los arreglos `test_images` y `test_labels` son los datos del *test set* que se usan para probar el modelo.\n",
+        "\n",
+        "> Las imágenes se cargan como arreglos `NumPy` de 28x28, con valores de pixel que varian de 0 a 255 (imagen en escala de grises). Los arreglos *labels* son arreglos de enteros, que van del 0 al 9, con tantas filas como imágenes hay para entrenamiento y para testeo, respectivamente. Estos corresponden a la *clase* de ropa que la imagen representa:\n",
+        "\n",
+        "> <table>\n",
+        "  <tr>\n",
+        "    <th>Label</th>\n",
+        "    <th>Class</th>\n",
+        "  </tr>\n",
+        "  <tr>\n",
+        "    <td>0</td>\n",
+        "    <td>T-shirt/top</td>\n",
+        "  </tr>\n",
+        "  <tr>\n",
+        "    <td>1</td>\n",
+        "    <td>Trouser</td>\n",
+        "  </tr>\n",
+        "    <tr>\n",
+        "    <td>2</td>\n",
+        "    <td>Pullover</td>\n",
+        "  </tr>\n",
+        "    <tr>\n",
+        "    <td>3</td>\n",
+        "    <td>Dress</td>\n",
+        "  </tr>\n",
+        "    <tr>\n",
+        "    <td>4</td>\n",
+        "    <td>Coat</td>\n",
+        "  </tr>\n",
+        "    <tr>\n",
+        "    <td>5</td>\n",
+        "    <td>Sandal</td>\n",
+        "  </tr>\n",
+        "    <tr>\n",
+        "    <td>6</td>\n",
+        "    <td>Shirt</td>\n",
+        "  </tr>\n",
+        "    <tr>\n",
+        "    <td>7</td>\n",
+        "    <td>Sneaker</td>\n",
+        "  </tr>\n",
+        "    <tr>\n",
+        "    <td>8</td>\n",
+        "    <td>Bag</td>\n",
+        "  </tr>\n",
+        "    <tr>\n",
+        "    <td>9</td>\n",
+        "    <td>Ankle boot</td>\n",
+        "  </tr>\n",
+        "</table>\n",
+        "\n",
+        "Cada imagen es mapeada a una unica etiqueta. Ya que los nombres de las clases no estan incluídos en los arreglos *labels*, los almacenamos acá para usarlos luego cuando se visualicen las imágenes:"
+      ],
+      "metadata": {
+        "id": "rAqs-bPA2xkI"
+      }
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "IjnLH5S2CaWx"
+      },
+      "source": [
+        "class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',\n",
+        "               'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "###Comienzo del analisis con el dataset Fashion MNIST"
+      ],
+      "metadata": {
+        "id": "x8pd4l8jkErZ"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Pre-procesamos las imagenes"
+      ],
+      "metadata": {
+        "id": "TvtULwiE83yR"
+      }
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "bW5WzIPlCaWv"
+      },
+      "source": [
+        "train_images = train_images / 255.0\n",
+        "test_images = test_images / 255.0\n",
+        "\n",
+        "print(np.min(train_images[0]),np.max(train_images[0]))"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Visualizamos"
+      ],
+      "metadata": {
+        "id": "tyJojHjcef1q"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "plt.figure(figsize=(10,10))\n",
+        "for i in range(25):\n",
+        "    plt.subplot(5,5,i+1)\n",
+        "    plt.xticks([])\n",
+        "    plt.yticks([])\n",
+        "    plt.grid(False)\n",
+        "    plt.imshow(train_images[i], cmap=plt.cm.binary)\n",
+        "    # The CIFAR labels happen to be arrays,\n",
+        "    # which is why you need the extra index\n",
+        "    plt.xlabel(class_names[train_labels[i]])\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "_V4cjBmuNYXy"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Preparamos el modelo, utilizamos el mismo del tutorial adaptando la entrada de las imagenes para nuestra dataset de 28x28 pixeles y 1 solo canal."
+      ],
+      "metadata": {
+        "id": "BAVEG8Qzem_Y"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Base de la CNN (extractor de features)"
+      ],
+      "metadata": {
+        "id": "C5jtah7fgRUy"
+      }
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "k7AuqfVPlAei"
+      },
+      "source": [
+        "model = models.Sequential()\n",
+        "# 1st convolution layer: 32 filters of 3x3, ReLU activation function\n",
+        "model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)))\n",
+        "# 1st max pooling layer: 2x2\n",
+        "model.add(layers.MaxPooling2D((2, 2)))\n",
+        "# 2nd convolution layer: 64 filters of 3x3, ReLU activation function\n",
+        "model.add(layers.Conv2D(64, (3, 3), activation='relu'))\n",
+        "# 2nd max pooling layer: 2x2\n",
+        "model.add(layers.MaxPooling2D((2, 2)))\n",
+        "# 3st convolution layer: 64 filters of 3x3, ReLU activation function\n",
+        "model.add(layers.Conv2D(64, (3, 3), activation='relu'))"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "hEe9yh0clUuC"
+      },
+      "source": [
+        "model.summary()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Añadir capas densas (Clasificador)"
+      ],
+      "metadata": {
+        "id": "lYgpQlCLgoCZ"
+      }
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Cc58B6bAllW0"
+      },
+      "source": [
+        "# Flatten layer\n",
+        "model.add(layers.Flatten())\n",
+        "# Dense layer\n",
+        "model.add(layers.Dense(64, activation='relu'))\n",
+        "# Output layer\n",
+        "model.add(layers.Dense(10, activation='softmax'))"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "teymYynvlv3D"
+      },
+      "source": [
+        "model.summary()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Compilamos y entrenamos el modelo"
+      ],
+      "metadata": {
+        "id": "rsvoFZnKg25H"
+      }
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "S8olXzPymsmV"
+      },
+      "source": [
+        "model.compile(optimizer='adam',\n",
+        "              loss='sparse_categorical_crossentropy',\n",
+        "              metrics=['accuracy'])\n",
+        "\n",
+        "history = model.fit(train_images, train_labels, epochs=10,\n",
+        "                    validation_data=(test_images, test_labels))"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Evaluamos"
+      ],
+      "metadata": {
+        "id": "y6XGoURlhGTP"
+      }
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "1GUe0yAqnGGP"
+      },
+      "source": [
+        "plt.plot(history.history['accuracy'], label='accuracy')\n",
+        "plt.plot(history.history['val_accuracy'], label = 'val_accuracy')\n",
+        "plt.xlabel('Epoch')\n",
+        "plt.ylabel('Accuracy')\n",
+        "plt.ylim([0.5, 1])\n",
+        "plt.legend(loc='lower right')\n",
+        "\n",
+        "test_loss, test_acc = model.evaluate(test_images,  test_labels, verbose=2)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "jkHEcQ5nnPHc"
+      },
+      "source": [
+        "print(test_acc)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Visualizamos los filtros convolucionales aprendidos en la CNN"
+      ],
+      "metadata": {
+        "id": "HS24qxjQhIPL"
+      }
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "FUJR-i91nXNS"
+      },
+      "source": [
+        "import math\n",
+        "import numpy as np\n",
+        "\n",
+        "# Iterate thru all the layers of the model\n",
+        "\n",
+        "layers = [model.layers[0]]  # 0: First layer; 2: Second layer; ...\n",
+        "#layers = model.layers       # All layer (WARNING: Take a lot of time!!)\n",
+        "for layer in layers:\n",
+        "    if 'conv' in layer.name:\n",
+        "        weights, bias= layer.get_weights()\n",
+        "        print(layer.name)\n",
+        "\n",
+        "        #normalize filter values between 0 and 1 for visualization\n",
+        "        f_min, f_max = weights.min(), weights.max()\n",
+        "        filters = (weights - f_min) / (f_max - f_min)\n",
+        "        print(filters.shape)\n",
+        "        filter_cnt=1\n",
+        "\n",
+        "        fig = plt.figure(figsize=(math.ceil(filters.shape[2]/2), math.ceil(filters.shape[3]/2)))\n",
+        "        #plotting all the filters\n",
+        "        for i in range(filters.shape[3]):\n",
+        "            #get the filters\n",
+        "            filt=filters[:,:,:,i]\n",
+        "            #plotting each of the channel, color image RGB channels\n",
+        "            for j in range(filters.shape[2]):\n",
+        "                ax = fig.add_subplot(filters.shape[3], filters.shape[2], filter_cnt)\n",
+        "                ax.set_xticks([])\n",
+        "                ax.set_yticks([])\n",
+        "                plt.imshow(filt[:,:,j])\n",
+        "                filter_cnt += 1\n",
+        "        plt.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Visualizamos los features maps generados con la CNN"
+      ],
+      "metadata": {
+        "id": "ugLRKZ6FhO2f"
+      }
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "pjMh-cDPhq-4"
+      },
+      "source": [
+        "np.seterr(divide='ignore', invalid='ignore')\n",
+        "\n",
+        "# Retrieve layer and its names\n",
+        "idx_layer = [4] # Change idx_layer values for specific layers\n",
+        "successive_outputs = [model.layers[i].output for i in idx_layer]\n",
+        "layer_names = [model.layers[i].name for i in idx_layer]\n",
+        "\n",
+        "# Define a new Model\n",
+        "# Input = image\n",
+        "# Outputs = intermediate representations for all layers in the previous model after the first.\n",
+        "visualization_model = tf.keras.models.Model(inputs = model.inputs, outputs = successive_outputs)\n",
+        "\n",
+        "# Shape images\n",
+        "height = test_images.shape[1]\n",
+        "width = test_images.shape[2]\n",
+        "channel = 1\n",
+        "# For some images in dataset. Chage to select another images\n",
+        "for img_idx in (0,1000,2000,3000,4000):\n",
+        "  #Load the input image\n",
+        "  img = test_images[img_idx, :, :]\n",
+        "  img = img.reshape(1, height, width, channel)\n",
+        "\n",
+        "  # Let's run input image through our vislauization network\n",
+        "  # to obtain all intermediate representations for the image.\n",
+        "  successive_feature_maps = visualization_model.predict(img)\n",
+        "\n",
+        "  for idx_sfm in range(len(successive_feature_maps)):\n",
+        "    layer_name = layer_names[idx_sfm]\n",
+        "    feature_map = successive_feature_maps[idx_sfm]\n",
+        "\n",
+        "    # Only in case of selecting a single layer\n",
+        "    if len(feature_map.shape)==3:\n",
+        "      x = feature_map.shape[0]\n",
+        "      y = feature_map.shape[1]\n",
+        "      z = feature_map.shape[2]\n",
+        "      feature_map = feature_map.reshape(1, x, y, z)\n",
+        "\n",
+        "    if len(feature_map.shape) == 4:\n",
+        "      # Plot Feature maps for the conv / maxpool layers, not the fully-connected layers\n",
+        "      n_features = feature_map.shape[-1]  # number of features in the feature map\n",
+        "      size       = feature_map.shape[ 1]  # feature map shape (1, size, size, n_features)\n",
+        "\n",
+        "      # We will tile our images in this matrix\n",
+        "      display_grid = np.zeros((size, (size) * n_features))\n",
+        "\n",
+        "      # Postprocess the feature to be visually palatable\n",
+        "      for idx_nfeat in tf.range(n_features):\n",
+        "        x  = feature_map[0, :, :, idx_nfeat]\n",
+        "        x -= x.mean()\n",
+        "        x /= (x.std () + 1e-5)\n",
+        "        x *=  64\n",
+        "        x += 128\n",
+        "        x  = np.clip(x, 0, 255).astype('uint8')\n",
+        "        # Tile each filter into a horizontal grid\n",
+        "        display_grid[:, idx_nfeat * size : (idx_nfeat + 1) * size] = x# Display the grid\n",
+        "\n",
+        "      scale = 20. / n_features\n",
+        "      plt.figure( figsize=(scale * n_features, scale) )\n",
+        "      plt.title ( layer_name + \" :: \" + str(feature_map.shape) )\n",
+        "      plt.grid  ( False )\n",
+        "      plt.imshow( display_grid, aspect='auto', cmap='viridis' )"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "###Comienzo del analisis con el dataset para training Fashion MNIST e imagenes personales para test, las utilizadas en el Lab 1.  "
+      ],
+      "metadata": {
+        "id": "vbm1WTmgklDj"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import imageio.v3 as iio"
+      ],
+      "metadata": {
+        "id": "E-5AdA-bYGel"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "[LINK](https://drive.google.com/drive/folders/1_k4C1GP8g855GjZ0uDV8hj1fDicLFaa6?usp=drive_link) Para descargar las imagenes"
+      ],
+      "metadata": {
+        "id": "HvL_vvYb6Uyp"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Creacion del nuevo conjunto de imagenes para test\n",
+        "new_test_images = []\n",
+        "\n",
+        "for i in range(1, 31):\n",
+        "    path = f'/content/{i}.jpg'\n",
+        "    new_img = iio.imread(path)\n",
+        "    new_img = new_img[6:34, 6:34, 2] / 255.0      # Recortamos y normalizamos, ademas de quedarnos con una capa\n",
+        "    new_test_images.append(new_img)               # Agregamos la imagen a la lista\n",
+        "\n",
+        "new_test_images = np.array(new_test_images)       # Convertimos la lista en un array numpy\n",
+        "\n",
+        "print(new_test_images.shape)"
+      ],
+      "metadata": {
+        "id": "CKIZ_gtL71HU"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "new_test_labels = np.array([0,0,0,1,1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,8,8,8,9,9,9],dtype=np.uint8)"
+      ],
+      "metadata": {
+        "id": "0XVeMt7bz40O"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Visualizamos"
+      ],
+      "metadata": {
+        "id": "eyZFqN3GklDk"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "plt.figure(figsize=(10,10))\n",
+        "for i in range(30):\n",
+        "    plt.subplot(6,5,i+1)\n",
+        "    plt.xticks([])\n",
+        "    plt.yticks([])\n",
+        "    plt.grid(False)\n",
+        "    plt.imshow(new_test_images[i], cmap=plt.cm.binary)\n",
+        "    # The CIFAR labels happen to be arrays,\n",
+        "    # which is why you need the extra index\n",
+        "    plt.xlabel(class_names[new_test_labels[i]])\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "owEzX2AOklDl"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Utilizamos el mismo modelo del tutorial y el anterior test. Consultemos las predicciones."
+      ],
+      "metadata": {
+        "id": "KpqIAq70klDl"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "history = model.fit(train_images, train_labels, epochs=10,\n",
+        "                    validation_data=(new_test_images, new_test_labels))"
+      ],
+      "metadata": {
+        "id": "kNVc4ifbGVMe"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Evaluamos"
+      ],
+      "metadata": {
+        "id": "Qat-xGtdklDp"
+      }
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "msMd4BLxklDp"
+      },
+      "source": [
+        "plt.plot(history.history['accuracy'], label='accuracy')\n",
+        "plt.plot(history.history['val_accuracy'], label = 'val_accuracy')\n",
+        "plt.xlabel('Epoch')\n",
+        "plt.ylabel('Accuracy')\n",
+        "plt.ylim([0.5, 1])\n",
+        "plt.legend(loc='lower right')\n",
+        "\n",
+        "new_test_loss, new_test_acc = model.evaluate(new_test_images,  new_test_labels, verbose=2)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "t8fgC1DXklDp"
+      },
+      "source": [
+        "print(new_test_acc)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Recordando lo obtenido en el Lab 1\n",
+        "```\n",
+        "1/1 - 0s - 451ms/step - accuracy: 0.1000 - loss: 40.7850\n",
+        "```\n",
+        "Por lo tanto hemos logrado mejorar el mismo dataset de prueba con esta nueva estructura de red neuronal."
+      ],
+      "metadata": {
+        "id": "aRdMyAORMY_S"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## **EJERCICIO 2.2**: informe y conclusiones del ejercicio 2.1\n",
+        "\n",
+        "1. Elabore un breve resumen de lo realizado en el ejercicio 2.1\n",
+        "\n",
+        "2. Describa los principales resultados obtenidos\n",
+        "\n",
+        "3. Presente (si es posible) otros hallazgos realizados\n",
+        "\n",
+        "4. Escriba las conclusiones finales"
+      ],
+      "metadata": {
+        "id": "yjcvSIBbCZGs"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "###*Informe*"
+      ],
+      "metadata": {
+        "id": "1oA65eE1I-NN"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "El ejercicio consistió en implementar y evaluar un modelo de Red Neuronal Convolucional (CNN) para clasificar imágenes del dataset Fashion MNIST, siguiendo un workflow similar al empleado previamente con una Red Neuronal Artificial (ANN). Además, se evaluó el rendimiento de la CNN en un conjunto de imágenes externas personalizado, permitiendo una comparación directa con los resultados obtenidos utilizando la ANN.\n",
+        "\n",
+        "El proceso incluyó las siguientes etapas:\n",
+        "\n",
+        "- Separación del dataset personalizado en conjuntos de entrenamiento y prueba.\n",
+        "- Entrenamiento del modelo CNN con el dataset Fashion MNIST.\n",
+        "- Evaluación del desempeño de la CNN en el conjunto de test del dataset original y en el dataset externo y personal ([LINK](https://drive.google.com/drive/folders/1_k4C1GP8g855GjZ0uDV8hj1fDicLFaa6?usp=drive_link) Para descargar las imagenes).\n",
+        "- Comparación de los resultados obtenidos entre el modelo CNN y el ANN.\n"
+      ],
+      "metadata": {
+        "id": "ntGNdnWT9RcU"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "####*Principales resultados*\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "BzaKqEZveutE"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "**Evaluación en Fashion MNIST**\n",
+        "\n",
+        "El modelo CNN logró un rendimiento significativamente superior al modelo ANN.\n",
+        "\n",
+        "Logrando una precisión (accuracy) en el conjunto de test de Fashion MNIST:\n",
+        "- CNN: 90.80%\n",
+        "- ANN: 88.12%\n",
+        "\n",
+        "Ademas la CNN mostró una curva de aprendizaje consistente, logrando una mejor convergencia y precisión en menor número de épocas."
+      ],
+      "metadata": {
+        "id": "jG6MnlXp-X5F"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "**Evaluación en Dataset Personalizado**\n",
+        "\n",
+        "- CNN:\n",
+        "A pesar de mostrar una mejora respecto a la ANN, el modelo CNN no logró generalizar adecuadamente al conjunto de imágenes externas:\n",
+        "  - Precisión (accuracy): Entre 13.33% y 23.33% según la época.\n",
+        "  - Pérdida (loss): Incremental, alcanzando valores altos como 9.4946 al final del entrenamiento.\n",
+        "- ANN:\n",
+        "  - Precisión (accuracy): 10%\n",
+        "  - Pérdida (loss): 40.7850\n",
+        "\n",
+        "El bajo rendimiento en el dataset personalizado se debe, probablemente, a la discrepancia en las características de las imágenes externas y tal vez un preprocesamiento insuficiente."
+      ],
+      "metadata": {
+        "id": "1SIy932T_KUs"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Mientras que en general podemos destacar que:\n",
+        "\n",
+        "- *La arquitectura convolucional demostró ser más eficiente para capturar patrones* en el dataset original, lo que resultó en una mayor precisión en menor tiempo.\n",
+        "- *Ambos modelos mostraron limitaciones significativas al enfrentar un dataset externo.* Sin embargo, la CNN presentó una mejora relativa en comparación con la ANN.\n",
+        "- Otra vez, la precisión en el dataset externo evidencia la *importancia crítica de un preprocesamiento* adecuado para garantizar que las imágenes externas sean comparables al dataset original."
+      ],
+      "metadata": {
+        "id": "A-Zx3uBQ_1q6"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "####*Conclusiones*\n"
+      ],
+      "metadata": {
+        "id": "A8WmdPqIn-B_"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Luego de realizar y comparar los datasets y los modelos logramos identificar que la CNN superó a la ANN en el conjunto de test del dataset original, alcanzando un 90.80% de precisión frente al 88.12% obtenido por la ANN. Esto valida la capacidad de las redes convolucionales para capturar características espaciales en datos visuales.\n",
+        "\n",
+        "Ademas ambos modelos enfrentaron dificultades para generalizar al dataset personalizado. Aunque la CNN mostró una mejora relativa, su desempeño sigue siendo insatisfactorio para aplicaciones prácticas.\n",
+        "\n",
+        "Seguimos teniendo en cuenta que el bajo rendimiento en el dataset personalizado destaca la necesidad de un preprocesamiento consistente y la inclusión de datos más diversos durante el entrenamiento.\n",
+        "\n",
+        "Estos resultados destacan la robustez de la CNN en contextos controlados y la necesidad de abordar estrategias adicionales para mejorar su capacidad de generalización en datos externos.\n",
+        "\n",
+        "(Los proximos pasos seran agregar los comentarios y recomendaciones obtenidas por entrega del ejerciio, ademas de realizar los practicos y ejercicios adicionales)"
+      ],
+      "metadata": {
+        "id": "U68f9Sk1A6oT"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "D0eIVW1Mf-Ph"
+      },
+      "source": [
+        "## **EJERCICIO 2.3 (OPCIONAL)**: proponer nuevas arquitecturas para la CNN\n",
+        "\n",
+        "Empleando los conceptos aprendidos en este tutorial, proponga dos nuevas arquitecturas para la CNN del tutorial (la que utiliza el dataset CIFAR10), una que  mejore los resultados de la anterior y otra que los empeore.\n",
+        "\n",
+        "TIP 1: aumentar o reducir drásticamente la cantidad de capas y nodos, pero ojo con los tiempos de ejecución para arquitecturas muy grandes!\n",
+        "\n",
+        "TIP 2: revisar el artículo [How to use Dropout with Keras?](https://github.com/christianversloot/machine-learning-articles/blob/main/how-to-use-dropout-with-keras.md)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Yp1iPPbwf-qJ"
+      },
+      "source": [
+        "# EJERCICIO 2.3 (OPCIONAL)\n",
+        "# ..."
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "z7Swp-h3kVZD"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
