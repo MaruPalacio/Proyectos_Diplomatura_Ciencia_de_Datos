@@ -76,10 +76,12 @@ It contains **9,471 rows** and **17 columns**, representing **hourly averages** 
 ## 📬 Contributions
 
 Developed as part of the Certificate in Data Science, Machine Learning and its Applications.
-Author: Mariel Palacio, Alejandro Bringas, Lautaro Cabrera, Juan Carlos Recarey
+
+Authors: Mariel Palacio, Alejandro Bringas, Lautaro Cabrera, Juan Carlos Recarey
+
 ---
 
-📁 **Files**:
+## 📁 **Files**:
 
 * `EN_Project1_Data_Analysis_and_Visualization.ipynb`: Notebook - English version.
 * `ES_Project1_Data_Analysis_and_Visualization.ipynb`: Notebook - Spanish version.
