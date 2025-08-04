@@ -1,0 +1,1 @@
+This project aims to analyze and predict air quality in a highly polluted urban area in Italy using data from chemical and environmental sensors. Through supervised and unsupervised machine learning models, the project explores interactions between environmental factors and pollutants.
