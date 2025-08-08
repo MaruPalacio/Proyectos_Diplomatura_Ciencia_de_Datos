@@ -1,17 +1,15 @@
 # 🌎 Air Quality Analysis and Prediction in an Urban Area: Multisensor Data Exploration and Predictive Modeling
 
-## Course Information
 
 * **Diploma:** Diploma in Data Science, Machine Learning and Applications
-* **Practical Assignment:** #3 - Supervised and Unsupervised Learning
-* **Practical Submission Date:** September 16, 2024
-* **Final Presentation Video Submission Date:** September 30, 2024
+* **Project Assignment:** #3 - Supervised and Unsupervised Learning
+
 
 ## Project Overview
 
 Air quality is a critical topic on the global environmental health agenda. According to the WHO (2018), atmospheric pollutants are responsible for 1 in 9 deaths worldwide. However, many parts of the world lack basic air quality data.
 
-This dataset contains responses from a multisensor gas device installed in a highly polluted area in Italy. The objective is to examine how environmental factors and pollutant concentrations interact, which will allow us to understand the urban area's pollution level and use data science to inform environmental health strategies and practical recommendations to improve air quality and protect residents' health.
+This dataset contains responses from a multisensor gas device installed in a highly polluted area in Italy. The objective is to examine how environmental factors and pollutant concentrations interact, which will allow us to understand the urban area's pollution level and use data science to inform environmental health strategies and project recommendations to improve air quality and protect residents' health.
 
 The data was obtained from: [UCI Air Quality Dataset](https://archive.ics.uci.edu/dataset/360/air+quality)
 
@@ -20,9 +18,9 @@ To download the dataset, access this repository:
 
 ---
 
-## Objective of Practical #3
+## Objective of Project #3
 
-In this third practical on supervised and/or unsupervised learning, we apply classification, regression, decision tree models, or more advanced machine learning models such as XGBoost, LightGBM, or any other considered model. The goal is to extract the most relevant and meaningful insights presented by the dataset.
+In this third project on supervised and/or unsupervised learning, we apply classification, regression, decision tree models, or more advanced machine learning models such as XGBoost, LightGBM, or any other considered model. The goal is to extract the most relevant and meaningful insights presented by the dataset.
 
 The purpose is to evaluate and compare different models to determine which provide the best accuracy and predictive power relative to the initially posed questions. Through this analysis, we aim to propose effective actions to mitigate public health and environmental impacts related to air pollution.
 
@@ -57,7 +55,7 @@ The purpose is to evaluate and compare different models to determine which provi
 
 ---
 
-## Questions to Address in Practical #3
+## Questions to Address in Project #3
 
 1. **Which predictive model offers the best fit to predict pollutant concentrations based on environmental factors and/or sensor responses?**
 
@@ -100,6 +98,4 @@ The purpose is to evaluate and compare different models to determine which provi
 | NOx       | LightGBM\_Hyper | 0.962408 | 0.11337  | 0.182087 |
 
 
-
-Would you like me to generate a formatted markdown README file for you?
 
