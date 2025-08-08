@@ -1,7 +1,3 @@
-Claro, aquí tienes un README único que combina y resume los tres proyectos. Incluye un espacio para la imagen de portada y para incrustar el video de la presentación de YouTube:
-
----
-
 # 🌍🌎🌏 Air Quality Analysis and Prediction in an Urban Area
 
 ### Diploma in Data Science, Machine Learning, and its Applications
@@ -9,13 +5,6 @@ Claro, aquí tienes un README único que combina y resume los tres proyectos. In
 ### Projects #1, #2, and #3: Data Exploration, Cleaning, and Predictive Modeling
 
 ---
-
-## 🖼️ Presentation Cover Image
-
-**(Inserta aquí la imagen de portada de la presentación)**
-
----
-
 ## 🎥 Presentation Video
 
 
