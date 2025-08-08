@@ -1,4 +1,4 @@
-#🌎 Air Quality Analysis and Prediction in an Urban Area: Multisensor Data Exploration and Predictive Modeling
+# 🌎 Air Quality Analysis and Prediction in an Urban Area: Multisensor Data Exploration and Predictive Modeling
 
 ## Course Information
 
