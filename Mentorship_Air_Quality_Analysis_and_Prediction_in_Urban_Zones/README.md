@@ -6,9 +6,10 @@
 
 ---
 ## 🎥 Presentation Video
+[Ver presentación en YouTube](https://www.youtube.com/watch?v=DrYgPsqLCdE&list=PLBIxkZP-PNY-KEyKepIe7vYq56u7ew-_C&index=25)
 
-![Ver presentación en YouTube](analisis_y_prediccion_de_calidad_del_aire_en_una_zona_urbana_exploracion_de_datos_multisensor_y_modelado_predictivo.jpg)]
-[![Ver presentación en YouTube](analisis_y_prediccion_de_calidad_del_aire_en_una_zona_urbana_exploracion de_datos_multisensor_y_modelado_predictivo.jpg)](https://www.youtube.com/watch?v=DrYgPsqLCdE&list=PLBIxkZP-PNY-KEyKepIe7vYq56u7ew-_C&index=25)
+![Ver presentación en YouTube](analisis_y_prediccion_de_calidad_del_aire_en_una_zona_urbana_exploracion_de_datos_multisensor_y_modelado_predictivo.jpg)
+
 
 ---
 
